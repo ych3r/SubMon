@@ -1,3 +1,3 @@
 # SubMon
 
-> Subdomain Monitor: Notify the bug hunter when new subdomain is found.
+> Subdomain Monitor: Notify the bug hunter when new subdomains are found.
