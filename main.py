@@ -69,6 +69,8 @@ targets = {
     }
 }
 
+# --------------------- Target Endpoints --------------------- #
+
 @app.get("/target")
 def get_target(domain: str | None = None) -> dict[str, Any]:
     if not domain:
@@ -113,3 +115,24 @@ def delete_target(domain: str) -> dict[str, Any]:
         )
     targets.pop(domain)
     return {"detail": f"Target with domain '{domain}' is deleted!"}
+
+# --------------------- Subdomain Endpoints --------------------- #
+
+@app.get("/target/{domain}/subdomains")
+def get_subdomains(domain: str) -> dict[str, Any]:
+    if domain not in targets:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Given domain doesn't exist."
+        )
+    return targets[domain].get('subdomains')
+
+@app.patch("/target/{domain}/subdomains")
+def update_subdomains(domain: str, body: dict[str, Any]) -> dict[str, Any]:
+    if domain not in targets:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Given domain doesn't exist."
+        )
+    targets[domain].get('subdomains').update(body)
+    return targets[domain]
