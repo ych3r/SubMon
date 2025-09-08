@@ -2,6 +2,8 @@ from fastapi import FastAPI, HTTPException, status
 from scalar_fastapi import get_scalar_api_reference
 from typing import Any
 
+from schemas import Target, Subdomain
+
 app = FastAPI()
 
 # Scalar Documentation
@@ -71,8 +73,8 @@ targets = {
 
 # --------------------- Target Endpoints --------------------- #
 
-@app.get("/target")
-def get_target(domain: str | None = None) -> dict[str, Any]:
+@app.get("/target", response_model=Target)
+def get_target(domain: str | None = None):
     if not domain:
         return targets
     if domain not in targets:
@@ -83,21 +85,21 @@ def get_target(domain: str | None = None) -> dict[str, Any]:
     return targets[domain]
 
 @app.post("/target")
-def add_target(domain: str, body: dict[str, Any]) -> dict[str, Any]:
+def add_target(domain: str, body: Target) -> dict[str, Any]:
     if domain in targets:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Already had that domain."
         )
     targets[domain] = {
-        "subdomains": body['subdomains'],
-        "program_url": body['program_url'],
-        "notes": body['notes'],
+        "subdomains": body.subdomains,
+        "program_url": body.program_url,
+        "notes": body.notes,
     }
     return {"domain": domain}
 
-@app.patch("/target")
-def update_target(domain: str, body: dict[str, Any]) -> dict[str, Any]:
+@app.patch("/target", response_model=Target)
+def update_target(domain: str, body: Target):
     if domain not in targets:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -118,8 +120,8 @@ def delete_target(domain: str) -> dict[str, Any]:
 
 # --------------------- Subdomain Endpoints --------------------- #
 
-@app.get("/target/{domain}/subdomains")
-def get_subdomains(domain: str) -> dict[str, Any]:
+@app.get("/target/{domain}/subdomains", response_model=dict[str, Subdomain])
+def get_subdomains(domain: str):
     if domain not in targets:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -127,8 +129,8 @@ def get_subdomains(domain: str) -> dict[str, Any]:
         )
     return targets[domain].get('subdomains')
 
-@app.patch("/target/{domain}/subdomains")
-def update_subdomains(domain: str, body: dict[str, Any]) -> dict[str, Any]:
+@app.patch("/target/{domain}/subdomains", response_model=Target)
+def update_subdomains(domain: str, body: dict[str, Subdomain]):
     if domain not in targets:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
