@@ -3,8 +3,11 @@ from scalar_fastapi import get_scalar_api_reference
 from typing import Any
 
 from schemas import Target, Subdomain
+from database import Database
 
 app = FastAPI()
+
+db = Database()
 
 # Scalar Documentation
 @app.get("/scalar", include_in_schema=False)
