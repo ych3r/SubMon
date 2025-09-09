@@ -20,52 +20,60 @@ def get_scalar_docs():
 # for test
 targets = {
     "example.com": {
-        "subdomains": {
-            "api.example.com": {
+        "subdomains": [
+            {
+                "name": "api.example.com",
                 "status": "active",
                 "title": "API Endpoint"
             },
-            "blog.example.com": {
+            {
+                "name": "blog.example.com",
                 "status": "active",
                 "title": "Blog"
             },
-            "shop.example.com": {
+            {
+                "name": "shop.example.com",
                 "status": "inactive",
                 "title": "Shop"
             }
-        },
+        ],
         "program_url": "https://bugbounty.example.com",
         "notes": "Main site and all listed subdomains are in scope."
     },
     "testsite.org": {
-        "subdomains": {
-            "dev.testsite.org": {
+        "subdomains": [
+            {
+                "name": "dev.testsite.org",
                 "status": "active",
                 "title": "Development"
             },
-            "admin.testsite.org": {
+            {
+                "name": "admin.testsite.org",
                 "status": "inactive",
                 "title": "Admin Panel"
             }
-        },
+        ],
         "program_url": "https://testsite.org/bug-bounty",
         "notes": "Program paused until Q4."
     },
     "acme.io": {
-        "subdomains": {
-            "portal.acme.io": {
+        "subdomains": [
+            {
+                "name": "portal.acme.io",
                 "status": "active",
                 "title": "Portal"
             },
-            "api.acme.io": {
+            {
+                "name": "api.acme.io",
                 "status": "active",
                 "title": "API"
             },
-            "support.acme.io": {
+            {
+                "name": "support.acme.io",
                 "status": "inactive",
                 "title": "Support"
             }
-        },
+        ],
         "program_url": "https://acme.io/security",
         "notes": "Only portal and api subdomains are in scope."
     }
@@ -85,27 +93,25 @@ def get_target(domain: str | None = None):
     return targets[domain]
 
 @app.post("/target")
-def add_target(domain: str, body: Target) -> dict[str, Any]:
+def add_target(domain: str, target: Target) -> dict[str, Any]:
     if domain in targets:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Already had that domain."
         )
     targets[domain] = {
-        "subdomains": body.subdomains,
-        "program_url": body.program_url,
-        "notes": body.notes,
+        **target.model_dump()
     }
     return {"domain": domain}
 
 @app.patch("/target", response_model=Target)
-def update_target(domain: str, body: Target):
+def update_target(domain: str, target: Target):
     if domain not in targets:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Given domain doesn't exist."
         )
-    targets[domain].update(body)
+    targets[domain].update(target)
     return targets[domain]
 
 @app.delete("/target")
@@ -120,7 +126,7 @@ def delete_target(domain: str) -> dict[str, Any]:
 
 # --------------------- Subdomain Endpoints --------------------- #
 
-@app.get("/target/{domain}/subdomains", response_model=dict[str, Subdomain])
+@app.get("/target/{domain}/subdomains", response_model=list[Subdomain])
 def get_subdomains(domain: str):
     if domain not in targets:
         raise HTTPException(
@@ -130,11 +136,11 @@ def get_subdomains(domain: str):
     return targets[domain].get('subdomains')
 
 @app.patch("/target/{domain}/subdomains", response_model=Target)
-def update_subdomains(domain: str, body: dict[str, Subdomain]):
+def update_subdomains(domain: str, subdomain_list: list[Subdomain]):
     if domain not in targets:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Given domain doesn't exist."
         )
-    targets[domain].get('subdomains').update(body)
+    targets[domain].get('subdomains').extend(subdomain_list)
     return targets[domain]
